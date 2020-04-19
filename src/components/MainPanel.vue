@@ -2,9 +2,14 @@
   <el-container>
     <el-header>佛山房屋销售曲线图</el-header>
     <el-main>
-      <el-row type="flex" justify="center" class="Main__Row">
+      <el-row type="flex" justify="center">
         <el-col :span="12">
           <curve-component :chartdata="chartData" :options="lineOptions"/>
+        </el-col>
+        <el-col :span="6" :offset="2">
+          <el-row type="flex" justify="center" v-for="item in yoyDatas" :key="item.value">
+            <p style="fontSize: 30px">{{item.value}} <i :class="item.icon"></i></p>
+          </el-row>
         </el-col>
       </el-row>
     </el-main>
@@ -24,11 +29,13 @@ export default {
   },
   data () {
     return {
+      // 同比数据
+      yoyDatas: [],
       chartData: {
         labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
         datasets: [
           {
-            label: '2018年销售数字',
+            label: 'In 2018',
             fill: false,
             borderColor: 'red',
             data: [
@@ -46,9 +53,9 @@ export default {
               17608
             ]
           }, {
-            label: '2019年销售数字',
+            label: 'In 2019',
             fill: false,
-            borderColor: 'rgb(10,10,10)',
+            borderColor: 'blue',
             data: [
               6738,
               3873,
@@ -64,14 +71,14 @@ export default {
               10459
             ]
           }, {
-            label: '2020年销售数字',
+            label: 'In 2020',
             fill: false,
-            borderColor: 'rgb(20,20,20)',
+            borderColor: 'yellow',
             data: [
               5255,
               1604,
               7865,
-              4056
+              5518
             ]
           }
         ]
@@ -87,7 +94,47 @@ export default {
         },
         title: {
           display: true,
-          text: 'Custom Chart Title'
+          text: 'Housing Sales Curve'
+        },
+        tooltips: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            // Use the footer callback to display year-on-year comparative data of the items showing in the tooltip
+            footer: (tooltipItems, data) => {
+              // tooltipItems.forEach(function (tooltipItem) {
+              //   console.log('tooltipItem.datasetIndex = ' + tooltipItem.datasetIndex)
+              //   console.log(`tooltipItem.index = ${tooltipItem.index}`)
+              //   console.log(`data.datasets =  ${data.datasets}`)
+              // })
+              this.yoyDatas.splice(0, this.yoyDatas.length)
+              const lastElement = tooltipItems.pop()
+              const lastElementDataset = data.datasets[lastElement.datasetIndex]
+              const index = lastElement.index
+              tooltipItems.forEach(item => {
+                const element = data.datasets[item.datasetIndex]
+                const differentValue = element.data[index] - lastElementDataset.data[index]
+                if (differentValue > 0) { // 同比下降
+                  const ratio = (differentValue / element.data[index])
+                  const yoyItem = {}
+                  yoyItem.icon = 'el-icon-bottom'
+                  yoyItem.value = `${lastElementDataset.label},${lastElement.label}同比${element.label}下降: ${differentValue}套, 比例: ${ratio.toFixed(2) * 100}%`
+                  this.yoyDatas.push(yoyItem)
+                } else if (differentValue <= 0) { // 同比上升
+                  const ratio = (-differentValue / element.data[index])
+                  const yoyItem = {}
+                  yoyItem.icon = 'el-icon-top'
+                  yoyItem.value = `${lastElementDataset.label},${lastElement.label}同比${element.label}上升: ${-differentValue}套, 比例: ${ratio.toFixed(2) * 100}%`
+                  this.yoyDatas.push(yoyItem)
+                }
+              })
+              this.yoyDatas.reverse()
+            }
+          }
+        },
+        hover: {
+          mode: 'nearest',
+          intersect: true
         }
       },
       barChartData: {
