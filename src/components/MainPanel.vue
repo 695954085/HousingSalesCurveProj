@@ -4,11 +4,18 @@
     <el-main>
       <el-row type="flex" justify="center">
         <el-col :span="12">
-          <curve-component :chartdata="chartData" :options="lineOptions"/>
+          <curve-component :chartdata="chartData" :options="lineOptions" />
         </el-col>
         <el-col :span="6" :offset="2">
-          <el-row type="flex" justify="center" v-for="item in yoyDatas" :key="item.value">
-            <p style="fontSize: 30px">{{item.value}} <i :class="item.icon"></i></p>
+          <el-row
+            type="flex"
+            justify="center"
+            v-for="item in yoyDatas"
+            :key="item.value"
+          >
+            <p style="fontSize: 30px">
+              {{ item.value }} <i :class="item.icon"></i>
+            </p>
           </el-row>
         </el-col>
       </el-row>
@@ -19,6 +26,7 @@
 <script>
 import CurveComponent from './CurveComponent'
 import BarComponent from './BarComponent'
+import axios from 'axios'
 // eslint-disable-next-line
 Chart.defaults.global.defaultFontSize = 24;
 
@@ -33,56 +41,9 @@ export default {
       yoyDatas: [],
       chartData: {
         labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-        datasets: [
-          {
-            label: 'In 2018',
-            fill: false,
-            borderColor: 'red',
-            data: [
-              8448,
-              4129,
-              11261,
-              9713,
-              12936,
-              18250,
-              15748,
-              14684,
-              14079,
-              18090,
-              19832,
-              17608
-            ]
-          }, {
-            label: 'In 2019',
-            fill: false,
-            borderColor: 'blue',
-            data: [
-              6738,
-              3873,
-              12812,
-              11948,
-              10818,
-              10565,
-              9341,
-              8953,
-              8699,
-              8745,
-              8904,
-              10459
-            ]
-          }, {
-            label: 'In 2020',
-            fill: false,
-            borderColor: 'yellow',
-            data: [
-              5255,
-              1604,
-              7865,
-              7667
-            ]
-          }
-        ]
+        datasets: []
       },
+      colors: ['yellow', 'red', 'black', 'pink', 'blue'],
       lineOptions: {
         layout: {
           padding: {
@@ -178,10 +139,28 @@ export default {
         }
       }
     }
+  },
+  methods: {
+    createDateSet (key, data) {
+      const values = Object.keys(data).sort((a, b) => {
+        return Number.parseInt(a) >= Number.parseInt(b)
+      }).reduce((preV, curValue) => {
+        preV.push(data[curValue])
+        return preV
+      }, [])
+      return {
+        label: `In ${key}`,
+        fill: false,
+        borderColor: this.colors[Math.floor(Math.random() * 5)],
+        data: values
+      }
+    }
+  },
+  mounted () {
+    axios.get('http://localhost:8080/housingSalesData').then(data => {
+      let datas = this.createDateSet('2018', data.data['2018'])
+      this.yoyDatas.push(datas)
+    })
   }
 }
 </script>
-<style scoped>
-.Main__Row{
-}
-</style>
