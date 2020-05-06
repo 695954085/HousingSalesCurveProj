@@ -4,7 +4,7 @@
     <el-main>
       <el-row type="flex" justify="center">
         <el-col :span="12">
-          <curve-component :chartdata="chartData" :options="lineOptions" />
+          <curve-component :chart-data="chartData" :options="lineOptions" />
         </el-col>
         <el-col :span="6" :offset="2">
           <el-row
@@ -97,46 +97,6 @@ export default {
           mode: 'nearest',
           intersect: true
         }
-      },
-      barChartData: {
-        labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-        datasets: [
-          {
-            label: '# of Votes',
-            data: [12, 19, 3, 5, 2, 3],
-            backgroundColor: [
-              'rgba(255, 99, 132, 0.2)',
-              'rgba(54, 162, 235, 0.2)',
-              'rgba(255, 206, 86, 0.2)',
-              'rgba(75, 192, 192, 0.2)',
-              'rgba(153, 102, 255, 0.2)',
-              'rgba(255, 159, 64, 0.2)'
-            ],
-            borderColor: [
-              'rgba(255, 99, 132, 1)',
-              'rgba(54, 162, 235, 1)',
-              'rgba(255, 206, 86, 1)',
-              'rgba(75, 192, 192, 1)',
-              'rgba(153, 102, 255, 1)',
-              'rgba(255, 159, 64, 1)'
-            ],
-            borderWidth: 1
-          }
-        ]
-      },
-      barOptions: {
-        scales: {
-          yAxes: [
-            {
-              ticks: {
-                beginAtZero: true
-              }
-            }
-          ]
-        },
-        tooltips: {
-          titleFontColor: 'red'
-        }
       }
     }
   },
@@ -157,9 +117,14 @@ export default {
     }
   },
   mounted () {
-    axios.get('http://localhost:8080/housingSalesData').then(data => {
-      let datas = this.createDateSet('2018', data.data['2018'])
-      this.yoyDatas.push(datas)
+    this.$nextTick(() => {
+      axios.get('http://localhost:8080/housingSalesData').then(data => {
+        const dataSets = Object.keys(data.data).filter(value => value !== 'modificationTime').reduce((preV, curV) => {
+          preV.push(this.createDateSet(curV, data.data[curV]))
+          return preV
+        }, [])
+        this.chartData = Object.assign({}, this.chartData, {datasets: dataSets})
+      })
     })
   }
 }
